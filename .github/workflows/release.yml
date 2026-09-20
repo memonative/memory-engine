@@ -53,13 +53,14 @@ jobs:
   # short-lived token per PyPI project, and each has to be requested by the
   # job that uses it.
   #
-  # The environments are named per package rather than both being `pypi`:
-  # PyPI identifies a publisher by (owner, repo, workflow, environment) and
-  # rejects a second project registered against an identical tuple.
+  # The two environments must differ. PyPI identifies a trusted publisher by
+  # (owner, repo, workflow, environment) and rejects a second project
+  # registered against an identical tuple. These names are not decorative —
+  # they have to match the pending publishers registered on PyPI exactly.
   engine:
     needs: build
     runs-on: ubuntu-latest
-    environment: pypi-engine
+    environment: pypi
     permissions:
       id-token: write
     steps:
