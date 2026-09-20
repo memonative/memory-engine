@@ -1,0 +1,19 @@
+fastapi>=0.110.0
+uvicorn[standard]>=0.29.0
+gunicorn>=21.2.0
+sqlalchemy>=2.0.29
+asyncpg>=0.29.0
+alembic>=1.13.1
+pgvector>=0.2.5
+celery>=5.3.6
+redis>=5.0.3
+pydantic>=2.7.0
+pydantic-settings>=2.2.1
+openai>=1.16.2,<3
+httpx>=0.27.0
+python-dotenv>=1.0.1
+cryptography>=42.0.0
+
+# Optional: only needed when RERANK_BACKEND=local (default).
+# Skip it when using RERANK_BACKEND=api (Jina/Cohere).
+# sentence-transformers>=3.0.0

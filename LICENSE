@@ -1,0 +1,52 @@
+Business Source License 1.1
+
+Parameters
+
+Licensor:             Memonative
+Licensed Work:        Memonative Memory Engine
+                      The Licensed Work is (c) 2026 Memonative.
+                      EXCLUDING the `client/` directory (the
+                      `memonative-client` SDK), which is licensed
+                      separately under the MIT License; see
+                      client/LICENSE.
+Additional Use Grant: You may use the Licensed Work for any purpose,
+                      including production self-hosted deployments,
+                      EXCEPT offering it as a commercial managed
+                      memory service (i.e. selling hosted access to
+                      the Licensed Work to third parties).
+Change Date:          2029-06-07
+Change License:       Apache License, Version 2.0
+
+For the full BSL 1.1 licence terms, see:
+https://mariadb.com/bsl11/
+
+Notice
+
+The Business Source License (this document, or the "License") is not
+an Open Source license. However, the Licensed Work will eventually be
+made available under an Open Source License, as stated in this License.
+
+The full text of the BSL 1.1 is incorporated by reference from:
+https://mariadb.com/bsl11/
+
+The Licensor hereby grants you the right to copy, modify, create
+derivative works, redistribute, and make non-production use of the
+Licensed Work. The Licensor may make an Additional Use Grant, above,
+permitting limited production use.
+
+Effective on the Change Date, or the fourth anniversary of the first
+publicly available distribution of a specific version of the Licensed
+Work under this License, whichever comes first, the Licensor hereby
+grants you rights under the terms of the Change License, and the
+rights granted in the paragraph above terminate.
+
+If your use of the Licensed Work does not comply with the requirements
+currently in effect as described in this License, you must purchase a
+commercial license from the Licensor, its affiliated entities, or
+authorized resellers, or you must refrain from using the Licensed Work.
+
+All copies of the original and modified Licensed Work, and derivative
+works of the Licensed Work, are subject to this License. This License
+applies separately for each version of the Licensed Work and the
+Change Date may vary for each version of the Licensed Work released
+by Licensor.

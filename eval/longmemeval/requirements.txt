@@ -1,0 +1,6 @@
+# Eval-only deps. Installed separately from the main app so the app
+# image stays slim and a busted mem0 install doesn't break production.
+huggingface_hub>=0.20
+mem0ai>=0.1.0
+qdrant-client>=1.7
+tiktoken>=0.5

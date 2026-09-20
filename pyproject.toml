@@ -1,0 +1,57 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "memonative"
+version = "0.1.0"
+description = "Memory engine for LLM applications — extraction, decay, revision chains, retrieval."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { file = "LICENSE" }
+
+# Everything `memonative.facade.MemoryEngine` needs. FastAPI is deliberately
+# absent: the engine runs in-process, and the HTTP layer is one optional
+# consumer of it (see the `server` extra).
+#
+# celery and redis are core rather than optional because
+# `write_path.write_memories` calls `check_contradictions_task.delay(...)`
+# unconditionally — `process()` and `write()` fail without them. A dependency
+# whose absence breaks the primary path is not an extra.
+dependencies = [
+    "sqlalchemy>=2.0.29",
+    "asyncpg>=0.29.0",
+    "alembic>=1.13.1",
+    "pgvector>=0.2.5",
+    "celery>=5.3.6",
+    "redis>=5.0.3",
+    "pydantic>=2.7.0",
+    "pydantic-settings>=2.2.1",
+    "python-dotenv>=1.0.1",
+    "openai>=1.16.2,<3",
+    "httpx>=0.27.0",
+    "cryptography>=42.0.0",
+]
+
+[project.optional-dependencies]
+# The HTTP service: `memonative.main:app`.
+server = [
+    "fastapi>=0.110.0",
+    "uvicorn[standard]>=0.29.0",
+    "gunicorn>=21.2.0",
+]
+# Local cross-encoder reranking (RERANK_ENABLED=true, RERANK_BACKEND=local).
+# Skip it and set RERANK_BACKEND=api, or RERANK_ENABLED=false.
+rerank = ["sentence-transformers>=3.0.0"]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.23.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/memonative/memory-engine"
+Repository = "https://github.com/memonative/memory-engine"
+Issues = "https://github.com/memonative/memory-engine/issues"
+
+[tool.setuptools.packages.find]
+where = ["src"]
