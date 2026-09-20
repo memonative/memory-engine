@@ -38,5 +38,5 @@ jobs:
           path-to-signatures: signatures/version1/cla.json
           branch: main
           # Bots cannot agree to anything, and would otherwise block their own
-          # pull requests.
-          allowlist: bot*
+          # pull requests. Maintainers are covered by owning the project.
+          allowlist: Amaymani,bot*
