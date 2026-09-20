@@ -7,6 +7,9 @@
     A neuroscience-inspired memory layer that decays, consolidates, and tracks revision history — not another vector store with summarisation on top.
   </p>
   <p align="center">
+    Built by <a href="https://github.com/Amaymani"><strong>@Amaymani</strong></a> and <a href="https://github.com/Freak3123"><strong>@Freak3123</strong></a>
+  </p>
+  <p align="center">
     <a href="#quickstart">Quickstart</a> &middot;
     <a href="#api-reference">API Reference</a> &middot;
     <a href="#python-sdk">SDK</a> &middot;
@@ -527,6 +530,18 @@ alembic/               — database migrations
 eval/                  — LongMemEval benchmark harness
 tests/                 — pytest suite
 ```
+
+---
+
+## Authors
+
+Memonative is built and maintained by:
+
+- **[@Amaymani](https://github.com/Amaymani)**
+- **[@Freak3123](https://github.com/Freak3123)**
+
+Contributions are welcome — see [CONTRIBUTING.md](CONTRIBUTING.md) and the
+[security policy](SECURITY.md).
 
 ---
 

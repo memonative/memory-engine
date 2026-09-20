@@ -8,6 +8,10 @@ version = "0.1.0"
 description = "Python client for the Memonative memory engine HTTP API."
 readme = "README.md"
 requires-python = ">=3.11"
+authors = [
+    { name = "Amaymani" },
+    { name = "Freak3123" },
+]
 license = "MIT"
 license-files = ["LICENSE"]
 
