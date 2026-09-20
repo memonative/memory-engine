@@ -52,9 +52,9 @@ jobs:
       REDIS_URL_TEST: redis://localhost:6379/0
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
           cache: pip
@@ -75,21 +75,34 @@ jobs:
   secrets:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0
       # The pre-commit hook only protects contributors who ran
       # `pre-commit install`. This is the copy that always runs.
-      - uses: gitleaks/gitleaks-action@v2
+      #
+      # The binary rather than gitleaks-action: that action requires a paid
+      # licence key for repositories owned by an organisation. The scanner
+      # itself is MIT and has no such restriction.
+      - name: Install gitleaks
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_VERSION: 8.30.1
+        run: |
+          curl -sSfL "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz" \
+            | tar -xz -C /usr/local/bin gitleaks
+          gitleaks version
+
+      # Scans commit history, not just the working tree — a secret that was
+      # committed and later deleted is still published.
+      - name: Scan for secrets
+        run: gitleaks detect --no-banner --redact --verbose
 
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.11"
           cache: pip

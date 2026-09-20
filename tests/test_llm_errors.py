@@ -11,10 +11,31 @@ from __future__ import annotations
 
 import openai
 import pytest
+from pydantic import SecretStr
 
+from memonative.config import settings
 from memonative.errors import EngineError, EngineLLMError
 from memonative.llm import LLMClient
 import memonative.llm as llm_module
+
+
+@pytest.fixture(autouse=True)
+def _stub_llm_keys():
+    """Hand the openai SDK a non-empty key for every test in this module.
+
+    These tests exercise error mapping and never reach the network, so the
+    key's value is irrelevant — but openai 2.5+ refuses to *construct* a
+    client with an empty `api_key`, which lands before the code under test
+    runs. Older releases allowed it, so leaving the keys unset makes the
+    module pass or fail depending on which SDK version the environment
+    resolved, which is how this first reached CI green locally and red on a
+    clean machine. Stubbing here keeps it version-independent.
+    """
+    previous = (settings.OPENAI_API_KEY, settings.DEEPSEEK_API_KEY)
+    settings.OPENAI_API_KEY = SecretStr("sk-test")
+    settings.DEEPSEEK_API_KEY = SecretStr("sk-test")
+    yield
+    settings.OPENAI_API_KEY, settings.DEEPSEEK_API_KEY = previous
 
 
 def _openai_error(cls: type, **attrs):
@@ -93,7 +114,5 @@ def test_tenant_embedding_key_is_used():
 
 
 def test_embedding_key_falls_back_to_platform():
-    from memonative.config import settings
-
     client = LLMClient()
     assert client.embed_client.api_key == settings.OPENAI_API_KEY.get_secret_value()
