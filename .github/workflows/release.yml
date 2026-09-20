@@ -1,0 +1,83 @@
+name: Release
+
+# Tag-driven. `git tag v0.1.0 && git push --tags` publishes both packages;
+# nothing else does. Keeping this off `push: main` matters because a PyPI
+# version number can never be reused — an accidental publish of a broken
+# 0.1.0 means the next fix has to be 0.1.1 forever.
+on:
+  push:
+    tags: ["v*"]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      - run: pip install build
+
+      # The tag is what a human types and the version is what PyPI records.
+      # When they disagree, the release notes point at one version and the
+      # installable artefact is another, and the tag cannot be corrected
+      # after upload. Cheaper to fail here.
+      - name: Check the tag matches both package versions
+        run: |
+          python - <<'PY'
+          import os, pathlib, sys, tomllib
+
+          tag = os.environ["GITHUB_REF_NAME"].removeprefix("v")
+          bad = False
+          for path in ("pyproject.toml", "client/pyproject.toml"):
+              version = tomllib.loads(pathlib.Path(path).read_text())["project"]["version"]
+              status = "ok" if version == tag else "MISMATCH"
+              print(f"{path}: {version} vs tag {tag} -> {status}")
+              bad |= version != tag
+          sys.exit(bad)
+          PY
+
+      - name: Build both distributions
+        run: |
+          python -m build --outdir dist/engine .
+          python -m build --outdir dist/client client
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: dists
+          path: dist/
+
+  # Two jobs rather than one because trusted publishing mints a separate
+  # short-lived token per PyPI project, and each has to be requested by the
+  # job that uses it.
+  engine:
+    needs: build
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          name: dists
+          path: dist
+      - uses: pypa/gh-action-pypi-publish@v1.14.2
+        with:
+          packages-dir: dist/engine
+
+  client:
+    needs: build
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          name: dists
+          path: dist
+      - uses: pypa/gh-action-pypi-publish@v1.14.2
+        with:
+          packages-dir: dist/client
