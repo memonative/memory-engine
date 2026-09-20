@@ -1,0 +1,122 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # Floor and ceiling of the supported range. The versions in between
+        # rarely break independently, and each one costs a full run.
+        python-version: ["3.11", "3.13"]
+
+    # Postgres and Redis run for real rather than being mocked. Nine tests
+    # skip themselves when the database is unreachable, so a run without one
+    # is green while silently covering nothing — which is worse than red.
+    # Redis is here because the write path enqueues contradiction checks
+    # unconditionally.
+    services:
+      db:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: memonative
+          POSTGRES_PASSWORD: memonative
+          POSTGRES_DB: memonative
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U memonative"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+      redis:
+        image: redis:7
+        ports: ["6379:6379"]
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+
+    env:
+      DATABASE_URL: postgresql+asyncpg://memonative:memonative@localhost:5432/memonative
+      REDIS_URL: redis://localhost:6379/0
+      REDIS_URL_TEST: redis://localhost:6379/0
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+
+      - run: pip install -r requirements-dev.txt
+
+      - name: Run migrations
+        run: alembic upgrade head
+        env:
+          PYTHONPATH: src
+
+      # `perf` asserts on query latency, which shared runners cannot hold
+      # steady. A check that fails at random is a check people learn to
+      # ignore, so it stays out of CI and runs locally instead.
+      - name: Run tests
+        run: pytest -m "not perf" -q
+
+  secrets:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      # The pre-commit hook only protects contributors who ran
+      # `pre-commit install`. This is the copy that always runs.
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - run: pip install build twine
+
+      # Packaging breaks in ways the test suite cannot see: a misplaced TOML
+      # table can swallow the dependency list whole and every test still
+      # passes. Since a PyPI version number can never be reused, the wheel
+      # has to be built and checked before release, not during it.
+      - name: Build and check both distributions
+        run: |
+          python -m build --outdir dist/engine .
+          python -m build --outdir dist/client client
+          twine check dist/engine/* dist/client/*
+
+      - name: Verify the packages do not overlap
+        run: |
+          python - <<'PY'
+          import zipfile, glob
+          for pattern, expected in (
+              ("dist/engine/*.whl", "memonative"),
+              ("dist/client/*.whl", "memonative_client"),
+          ):
+              whl = glob.glob(pattern)[0]
+              tops = {n.split("/")[0] for n in zipfile.ZipFile(whl).namelist()}
+              tops = {t for t in tops if not t.endswith(".dist-info")}
+              assert tops == {expected}, f"{whl} ships {tops}, expected {{{expected!r}}}"
+              print(f"{whl} -> {tops}")
+          PY

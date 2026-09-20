@@ -14,6 +14,7 @@
     <a href="https://memonative.com">Website</a>
   </p>
   <p align="center">
+    <a href="https://github.com/memonative/memory-engine/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/memonative/memory-engine/actions/workflows/ci.yml/badge.svg"></a>
     <img alt="License" src="https://img.shields.io/badge/license-BSL_1.1-blue">
     <img alt="Python" src="https://img.shields.io/badge/python-3.11+-3776AB?logo=python&logoColor=white">
     <img alt="FastAPI" src="https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=white">
