@@ -88,6 +88,15 @@ exact line.
 ## Licensing of contributions
 
 The engine is under [BSL 1.1](LICENSE) and the SDK in
-[`client/`](client/LICENSE) is MIT. By opening a pull request you agree your
-contribution is licensed under whichever of the two applies to the files you
-touched.
+[`client/`](client/LICENSE) is MIT.
+
+Before your first pull request can be merged, you will be asked to agree to the
+[Contributor License Agreement](CLA.md). A bot comments on the PR, you reply
+with one line, and that is the whole process — once ever, not per contribution.
+
+You keep the copyright in your work. What the agreement grants is permission
+broad enough for Memonative to use it in the commercial hosted service. That
+permission is necessary rather than greedy: BSL forbids running the project as a
+managed service, so a contribution licensed to us under BSL alone could not go
+into the hosted build, and we would have to refuse it. [CLA.md](CLA.md) opens
+with a plain-English summary before the legal text.

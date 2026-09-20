@@ -1,0 +1,42 @@
+name: CLA
+
+# Asks first-time contributors to agree to CLA.md, then records it. A
+# contributor signs by posting one comment on their pull request; the signature
+# is stored as JSON in this repository rather than in any external service.
+#
+# The engine is BSL-licensed and also runs as a commercial hosted service. Code
+# contributed under BSL alone could not be used in that service, so without a
+# signature on file a contribution cannot be merged at all.
+on:
+  issue_comment:
+    types: [created]
+  # `pull_request_target` rather than `pull_request`: the job needs write
+  # access to record the signature, which a fork-triggered `pull_request` run
+  # does not get. Nothing here checks out or runs the contributor's code, which
+  # is the hazard that would otherwise come with this trigger.
+  pull_request_target:
+    types: [opened, closed, synchronize]
+
+permissions:
+  actions: write
+  contents: write
+  pull-requests: write
+  statuses: write
+
+jobs:
+  cla:
+    runs-on: ubuntu-latest
+    steps:
+      - if: (github.event.comment.body == 'recheck' || github.event.comment.body == 'I have read the CLA Document and I hereby sign the CLA') || github.event_name == 'pull_request_target'
+        uses: contributor-assistant/github-action@v2.6.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          path-to-document: https://github.com/memonative/memory-engine/blob/main/CLA.md
+          # Created by the action on the first signature. Creating it by hand
+          # makes the run fail.
+          path-to-signatures: signatures/version1/cla.json
+          branch: main
+          # Bots cannot agree to anything, and would otherwise block their own
+          # pull requests.
+          allowlist: bot*
