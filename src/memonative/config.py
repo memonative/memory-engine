@@ -15,8 +15,6 @@ DEFAULT_TENANT_ID = UUID("00000000-0000-0000-0000-00000000eeee")
 class Settings(BaseSettings):
     DATABASE_URL: str = "postgresql+asyncpg://memonative:memonative@localhost:5432/memonative"
     OPENAI_API_KEY: SecretStr = SecretStr("")
-    DEEPSEEK_API_KEY: SecretStr = SecretStr("")
-    DEEPSEEK_BASE_URL: str = "https://api.deepseek.com/v1"
     REDIS_URL: str = "redis://localhost:6379/0"
     API_KEY: SecretStr = SecretStr("")
     MASTER_ENCRYPTION_KEY: SecretStr = SecretStr("")

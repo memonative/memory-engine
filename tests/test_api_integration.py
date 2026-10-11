@@ -37,14 +37,13 @@ def client():
     # The LLM keys are stubbed for the same reason: `get_llm` refuses to build
     # a keyless client, and that refusal would also land before validation.
     previous_master = settings.MASTER_ENCRYPTION_KEY
-    previous_keys = (settings.OPENAI_API_KEY, settings.DEEPSEEK_API_KEY)
+    previous_keys = settings.OPENAI_API_KEY
     settings.API_KEY = SecretStr("")
     settings.MASTER_ENCRYPTION_KEY = SecretStr("")
     settings.OPENAI_API_KEY = SecretStr("sk-test")
-    settings.DEEPSEEK_API_KEY = SecretStr("sk-test")
     yield TestClient(_fresh_app())
     settings.MASTER_ENCRYPTION_KEY = previous_master
-    settings.OPENAI_API_KEY, settings.DEEPSEEK_API_KEY = previous_keys
+    settings.OPENAI_API_KEY = previous_keys
 
 
 @pytest.fixture
@@ -81,21 +80,6 @@ def test_tool_manifest_openai(client):
     assert r.status_code == 200
     body = r.json()
     assert body["provider"] == "openai"
-    names = {t["function"]["name"] for t in body["tools"]}
-    assert names == {"search_memory", "recall_fact", "save_memory", "list_history"}
-    for tool in body["tools"]:
-        assert tool["type"] == "function"
-        props = tool["function"]["parameters"].get("properties", {})
-        assert "user_id" not in props
-
-
-def test_tool_manifest_deepseek(client):
-    # DeepSeek's tool-calling schema is OpenAI-compatible; the adapter
-    # exists for discoverability so /v1/tools/deepseek doesn't 400.
-    r = client.get("/v1/tools/deepseek")
-    assert r.status_code == 200
-    body = r.json()
-    assert body["provider"] == "deepseek"
     names = {t["function"]["name"] for t in body["tools"]}
     assert names == {"search_memory", "recall_fact", "save_memory", "list_history"}
     for tool in body["tools"]:

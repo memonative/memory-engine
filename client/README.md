@@ -45,7 +45,7 @@ async with AsyncClient("http://localhost:8000", api_key="mn_...") as mn:
 
 ## Agent tool calls
 
-The server publishes tool schemas for Anthropic, OpenAI and DeepSeek.
+The server publishes tool schemas for Anthropic and OpenAI.
 `dispatch_tool_call` routes a model's tool call to the right endpoint:
 
 ```python

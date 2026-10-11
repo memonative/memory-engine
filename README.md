@@ -74,7 +74,7 @@ Memonative brings all of this to AI agents through small, JSON-only HTTP primiti
 - **Superseded-revision suppression** — stale slot values stop being echoed as new memories
 - **Per-row event semantics** — `event_type` (add/update/delete) + resolved `event_date` let the reader reason about *when* something happened
 - **Timeline retrieval + LLM dedup rerank** — composable retrieval modules alongside vector + FTS fusion
-- **DeepSeek engine LLM** — `temperature=0` deterministic extraction with 16K token output window
+- **OpenAI engine LLM** — `gpt-5.6-sol`, `temperature=0` deterministic extraction with 16K token output window
 
 </details>
 
@@ -100,8 +100,7 @@ See `eval/longmemeval/LAUNCH.md` for parallel execution and resumability.
 ### Prerequisites
 
 - Docker Desktop
-- An [OpenAI API key](https://platform.openai.com/api-keys) (embeddings only)
-- A [DeepSeek API key](https://platform.deepseek.com/) (engine LLM)
+- An [OpenAI API key](https://platform.openai.com/api-keys) (engine LLM + embeddings)
 
 ### 1. Clone and configure
 
@@ -111,11 +110,10 @@ cd memory-engine
 cp .env.example .env
 ```
 
-Edit `.env` with your API keys:
+Edit `.env` with your API key:
 
 ```env
 OPENAI_API_KEY=sk-your-openai-key
-DEEPSEEK_API_KEY=sk-your-deepseek-key
 ```
 
 ### 2. Start the stack
@@ -159,7 +157,7 @@ The engine extracts structured facts (location=Berlin, employer=Stripe), writes 
 ## Architecture
 
 ```
-                        ┌─→  DeepSeek  (engine LLM: extraction, consensus,
+                        ┌─→  OpenAI    (engine LLM, gpt-5.6-sol: extraction, consensus,
                         │              edges, rerank, timeline, consolidation,
                         │              reconsolidation, slot canonicalization)
 PostgreSQL 16 + pgvector ←┤
@@ -183,7 +181,7 @@ Each stage is a composable module in `engine/`. Contradiction detection is defer
 
 | Role | Provider | Model | Purpose |
 |------|----------|-------|---------|
-| Engine | DeepSeek | deepseek-v4-flash | All structured-JSON tasks: extraction, consensus, edges, consolidation, reconsolidation, timeline classification, slot canonicalization, dedup rerank |
+| Engine | OpenAI | gpt-5.6-sol | All structured-JSON tasks: extraction, consensus, edges, consolidation, reconsolidation, timeline classification, slot canonicalization, dedup rerank |
 | Embedding | OpenAI | text-embedding-3-small | 1536-dim vectors, dimension-locked to pgvector HNSW index |
 
 Both keys come from the environment by default. A tenant can override the engine key with its own via the admin API — see [Auth model](#auth-model).
@@ -209,7 +207,7 @@ For tool-calling agents. JSON-only. Read endpoints have no side effects.
 | `GET` | `/v1/memory/slots/{user_id}` | List all known attribute slots with current values |
 | `GET` | `/v1/memory/audit/{user_id}` | Full audit trail across all slots (paginated) |
 | `GET` | `/v1/memory/facts/{user_id}/{slot}` | Current value + revision chain for one slot |
-| `GET` | `/v1/tools/{provider}` | Ready-to-register tool manifest (`anthropic`, `openai`, `deepseek`) |
+| `GET` | `/v1/tools/{provider}` | Ready-to-register tool manifest (`anthropic`, `openai`) |
 | `POST` | `/v1/consolidate/{user_id}` | Manually trigger episodic consolidation |
 
 ### Admin API (master-key gated)
@@ -269,24 +267,6 @@ manifest = requests.get("http://localhost:8000/v1/tools/openai").json()
 client = openai.OpenAI()
 resp = client.chat.completions.create(
     model="gpt-4o",
-    tools=manifest["tools"],
-    messages=[{"role": "user", "content": "Where do I live again?"}],
-)
-```
-
-### DeepSeek
-
-```python
-import openai, requests
-
-manifest = requests.get("http://localhost:8000/v1/tools/deepseek").json()
-
-client = openai.OpenAI(
-    api_key="sk-your-deepseek-key",
-    base_url="https://api.deepseek.com/v1",
-)
-resp = client.chat.completions.create(
-    model="deepseek-chat",
     tools=manifest["tools"],
     messages=[{"role": "user", "content": "Where do I live again?"}],
 )
@@ -374,7 +354,7 @@ with Client(base_url, api_key=MASTER_KEY) as mn:
 
 ```bash
 cp .env.example .env
-# Set OPENAI_API_KEY and DEEPSEEK_API_KEY
+# Set OPENAI_API_KEY
 docker-compose up -d --build
 ```
 
@@ -392,7 +372,7 @@ docker compose -f docker-compose.prod.yml up -d
 
 Row-Level Security isolates tenants at the database level, so one engine can back several applications without their memories ever meeting. Mint a tenant and a key per application via the admin API, and optionally give each its own LLM key.
 
-Per-tenant keys need `MASTER_ENCRYPTION_KEY` set — without it there is nothing to decrypt stored credentials with, and every tenant runs on the shared `DEEPSEEK_API_KEY`.
+Per-tenant keys need `MASTER_ENCRYPTION_KEY` set — without it there is nothing to decrypt stored credentials with, and every tenant runs on the shared `OPENAI_API_KEY`.
 
 ---
 
@@ -428,7 +408,7 @@ curl -sX POST http://localhost:8000/admin/tenants \
 curl -sX PUT http://localhost:8000/admin/tenants/$TENANT_ID/credentials \
   -H "Authorization: Bearer $MASTER_KEY" \
   -H "Content-Type: application/json" \
-  -d '{"engine_api_key":"sk-tenant-deepseek-key"}'
+  -d '{"engine_api_key":"sk-tenant-openai-key"}'
 ```
 
 ---
@@ -523,7 +503,7 @@ src/memonative/
     bootstrap.py       — startup tenant/key provisioning
     credentials.py     — per-tenant credential resolution
     encryption.py      — Fernet envelope encryption
-  agent_tools.py       — tool manifests for Anthropic/OpenAI/DeepSeek
+  agent_tools.py       — tool manifests for Anthropic/OpenAI
 client/                — `memonative-client` SDK, published separately (MIT)
   src/memonative_client/
 alembic/               — database migrations

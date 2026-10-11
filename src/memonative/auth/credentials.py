@@ -54,8 +54,8 @@ async def resolve_credentials(
         except ProgrammingError:
             logger.debug("tenant_credentials table missing — using global keys")
 
-    engine_key = settings.DEEPSEEK_API_KEY.get_secret_value()
-    engine_url = settings.DEEPSEEK_BASE_URL
+    engine_key = settings.OPENAI_API_KEY.get_secret_value()
+    engine_url = ""  # empty → OpenAI default endpoint
     engine_model = ""
 
     if cred is not None:

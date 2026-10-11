@@ -170,7 +170,7 @@ class MemonativeAdapter(MemoryAdapter):
         intent = {"primary": "social", "mode": "conversational"}
 
         # Retrieve 2x the target so the LLM rerank has material to dedup
-        # (a noisy top_k is what hurt v3-deepseek-k10-30 precise-value
+        # (a noisy top_k is what hurt the v3 k10-30 run precise-value
         # lookups). Engine retrieval stays deterministic; the LLM dedup
         # is opt-in at this adapter boundary so production code paths
         # don't pay the latency.

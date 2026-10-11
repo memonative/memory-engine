@@ -172,11 +172,7 @@ class Client:
         return self._request("POST", f"/v1/consolidate/{user_id}")
 
     def tool_manifest(self, provider: str) -> dict[str, Any]:
-        """Fetch the tool manifest for 'anthropic', 'openai', or 'deepseek'.
-
-        DeepSeek's tool-calling schema is identical to OpenAI's (same
-        SDK, base_url-overridden) — exposed as its own provider name
-        purely for discoverability.
+        """Fetch the tool manifest for 'anthropic' or 'openai'.
         """
         return self._request("GET", f"/v1/tools/{provider}")
 

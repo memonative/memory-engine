@@ -18,12 +18,10 @@ x-env-docs:
   #   DATABASE_URL=postgresql+asyncpg://user:pass@host:5432/memonative
   #   REDIS_URL=redis://:password@host:6379/0
   #   API_KEY=<master bearer token>
-  #   OPENAI_API_KEY=<for embeddings>
-  #   DEEPSEEK_API_KEY=<for engine LLM>
+  #   OPENAI_API_KEY=<for engine LLM (gpt-5.6-sol) + embeddings>
   #
   # Optional:
   #   MASTER_ENCRYPTION_KEY=<fernet key for per-tenant keys>
-  #   DEEPSEEK_BASE_URL=https://api.deepseek.com/v1
 
 x-common: &common
   build:

@@ -301,13 +301,12 @@ async def _generate_answer(
         f"{date_hint}"
         f"Question: {question}\nAnswer:"
     )
-    # No temperature / top_p / penalty params here — DeepSeek defaults
-    # thinking ON for v4-pro and silently ignores those sampling controls
-    # in thinking mode. Thinking is exactly what we want for the reader
-    # (counting distinct items, computing date gaps, ordering events),
-    # so leave the default in place.
+    # No temperature / top_p / penalty params here — gpt-5.6-sol only
+    # accepts sampling controls with reasoning off, and reasoning is
+    # exactly what we want for the reader (counting distinct items,
+    # computing date gaps, ordering events), so leave the default on.
     response = await llm.chat.completions.create(
-        model="deepseek-v4-pro",
+        model="gpt-5.6-sol",
         messages=[
             {"role": "system", "content": ANSWER_SYSTEM_PROMPT},
             {"role": "user", "content": user},
@@ -393,14 +392,8 @@ async def run_adapter(
     if done:
         print(f"[{adapter.name}] resuming — {len(done)} already done")
 
-    # Reader uses DeepSeek (OpenAI-compatible SDK with a base_url
-    # override). The judge in scorer.py stays on OpenAI so accuracy
-    # numbers remain comparable to prior runs and to mem0's published
-    # results.
-    llm = AsyncOpenAI(
-        api_key=_settings.DEEPSEEK_API_KEY.get_secret_value(),
-        base_url=_settings.DEEPSEEK_BASE_URL,
-    )
+    # Reader and the judge in scorer.py both run on OpenAI.
+    llm = AsyncOpenAI(api_key=_settings.OPENAI_API_KEY.get_secret_value())
     tracker = get_tracker()
 
     n_attempted = 0

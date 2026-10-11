@@ -31,11 +31,10 @@ def _stub_llm_keys():
     resolved, which is how this first reached CI green locally and red on a
     clean machine. Stubbing here keeps it version-independent.
     """
-    previous = (settings.OPENAI_API_KEY, settings.DEEPSEEK_API_KEY)
+    previous = settings.OPENAI_API_KEY
     settings.OPENAI_API_KEY = SecretStr("sk-test")
-    settings.DEEPSEEK_API_KEY = SecretStr("sk-test")
     yield
-    settings.OPENAI_API_KEY, settings.DEEPSEEK_API_KEY = previous
+    settings.OPENAI_API_KEY = previous
 
 
 def _openai_error(cls: type, **attrs):

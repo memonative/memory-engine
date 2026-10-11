@@ -250,19 +250,6 @@ def as_openai_tools() -> list[dict[str, Any]]:
     ]
 
 
-def as_deepseek_tools() -> list[dict[str, Any]]:
-    """DeepSeek Chat Completions tool-calling format.
-
-    DeepSeek's API is OpenAI-compatible — same `{"type": "function",
-    "function": {...}}` schema consumed by the same SDK with a
-    `base_url` override. We expose it as its own provider name purely
-    for discoverability, so callers asking for `/v1/tools/deepseek`
-    get a valid manifest instead of a 400.
-
-    https://api-docs.deepseek.com/guides/function_calling
-    """
-    return as_openai_tools()
-
 
 def build_tool_manifest(provider: str) -> dict[str, Any]:
     provider_norm = provider.strip().lower()
@@ -270,11 +257,9 @@ def build_tool_manifest(provider: str) -> dict[str, Any]:
         return {"provider": "anthropic", "tools": as_anthropic_tools()}
     if provider_norm == "openai":
         return {"provider": "openai", "tools": as_openai_tools()}
-    if provider_norm == "deepseek":
-        return {"provider": "deepseek", "tools": as_deepseek_tools()}
     raise ValueError(
         f"unknown provider {provider!r}. "
-        f"supported: 'anthropic', 'openai', 'deepseek'"
+        f"supported: 'anthropic', 'openai'"
     )
 
 

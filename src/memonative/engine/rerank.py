@@ -7,7 +7,7 @@ adds a pure dedup pass — drop memories that are paraphrases of another
 already-kept memory, preserve everything else.
 
 A previous version of this module also tried to rerank by relevance,
-but that turned out to drop critical context: in v3-deepseek-k10-rerank-30
+but that turned out to drop critical context: in the v3 k10-rerank-30 eval run
 the rerank kept only 1 of 5 useful memories for `505af2f5` (creamer
 question) because it judged the user's existing recipe "tangential" to
 "new creamer recommendations". The retrieval scorer already does
