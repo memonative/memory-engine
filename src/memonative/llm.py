@@ -25,19 +25,10 @@ def require_env_llm_keys() -> None:
     the operator sees a bare 500 and the real cause only in the logs, which
     is the most common way a fresh deployment goes wrong.
     """
-    missing = [
-        name
-        for name, value in (
-            ("OPENAI_API_KEY", settings.OPENAI_API_KEY.get_secret_value()),
-            ("DEEPSEEK_API_KEY", settings.DEEPSEEK_API_KEY.get_secret_value()),
-        )
-        if not value
-    ]
-    if missing:
+    if not settings.OPENAI_API_KEY.get_secret_value():
         raise ConfigurationError(
-            f"Missing {' and '.join(missing)}. Copy .env.example to .env, add "
-            "your keys, and restart. OPENAI_API_KEY is used for embeddings and "
-            "DEEPSEEK_API_KEY for the engine LLM."
+            "Missing OPENAI_API_KEY. Copy .env.example to .env, add your key, "
+            "and restart. It is used for both the engine LLM and embeddings."
         )
 
 _LLM_TIMEOUT = httpx.Timeout(60.0, connect=10.0)
@@ -101,13 +92,12 @@ class LLMProtocol(Protocol):
 class LLMClient:
     """Wrapper for engine-internal LLM tasks.
 
-    Two providers backstop two responsibilities:
-      - DeepSeek (OpenAI-compatible API) handles `complete()` for
-        extraction, consensus, edges, consolidation, reconsolidation,
-        and the timeline classifier — all structured-JSON callers.
-      - OpenAI handles `embed()` because DeepSeek doesn't offer an
-        embeddings endpoint and pgvector indexes are dimension-locked
-        to text-embedding-3-small.
+    OpenAI backs both responsibilities:
+      - `complete()` (gpt-5.6-sol) handles extraction, consensus, edges,
+        consolidation, reconsolidation, and the timeline classifier —
+        all structured-JSON callers.
+      - `embed()` uses text-embedding-3-small because pgvector indexes
+        are dimension-locked to it.
 
     Memonative does NOT generate the customer's chat reply; the
     customer's own LLM does that downstream with the memories we
@@ -119,7 +109,7 @@ class LLMClient:
     that want sampling variance can pass `temperature=...` explicitly.
     """
 
-    DEFAULT_MODEL = "deepseek-v4-flash"
+    DEFAULT_MODEL = "gpt-5.6-sol"
 
     def __init__(
         self,
@@ -129,8 +119,9 @@ class LLMClient:
         embedding_api_key: str | None = None,
     ):
         self.complete_client = AsyncOpenAI(
-            api_key=engine_api_key or settings.DEEPSEEK_API_KEY.get_secret_value(),
-            base_url=engine_base_url or settings.DEEPSEEK_BASE_URL,
+            api_key=engine_api_key or settings.OPENAI_API_KEY.get_secret_value(),
+            # None falls through to the SDK default (api.openai.com).
+            base_url=engine_base_url or None,
             timeout=_LLM_TIMEOUT,
         )
         self._default_model = engine_model or self.DEFAULT_MODEL
@@ -174,12 +165,11 @@ class LLMClient:
         # rerun (e.g. 778164c6 lost "Grilled Snapper with Mango Salsa"
         # between runs of the same input).
         #
-        # max_tokens defaults to 16384 — the documented ceiling for
-        # DeepSeek v4-flash in standard (non-thinking) mode. Long
-        # ChatGPT-style sessions with many list-item memories were
-        # truncating mid-JSON at the previous 8K cap; silent truncation
-        # drops the whole session because the parser fails. 16K gives
-        # ~2x headroom over the worst case we've observed.
+        # max_tokens defaults to 16384. Long ChatGPT-style sessions with
+        # many list-item memories were truncating mid-JSON at the previous
+        # 8K cap; silent truncation drops the whole session because the
+        # parser fails. 16K gives ~2x headroom over the worst case we've
+        # observed.
         resolved_model = model or self._default_model
 
         messages = []
@@ -193,15 +183,15 @@ class LLMClient:
                 response_format={"type": "json_object"},
                 messages=messages,
                 temperature=temperature,
-                max_tokens=max_tokens,
-                # DeepSeek defaults thinking ON for v4-flash, which (a)
-                # silently ignores `temperature` (so extraction loses the
-                # determinism we explicitly added after 778164c6 dropped
-                # "Grilled Snapper" on rerun), and (b) burns thinking
-                # tokens on what are really pattern-matching tasks
-                # (extraction, consensus, edges, consolidation,
-                # reconsolidation, timeline classifier). Disable.
-                extra_body={"thinking": {"type": "disabled"}},
+                # GPT-5 models take max_completion_tokens, not max_tokens.
+                max_completion_tokens=max_tokens,
+                # gpt-5.6-sol rejects any temperature other than 1 unless
+                # reasoning is off. Reasoning also burns tokens on what are
+                # really pattern-matching tasks (extraction, consensus,
+                # edges, consolidation, reconsolidation, timeline
+                # classifier), and temperature=0 is the determinism we
+                # added after 778164c6 dropped "Grilled Snapper" on rerun.
+                reasoning_effort="none",
             )
 
         try:

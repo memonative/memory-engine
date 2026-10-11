@@ -58,7 +58,7 @@ async def get_llm(
             detail=(
                 "Engine LLM key not configured for this tenant. Set one with "
                 "PUT /admin/tenants/{tenant_id}/credentials, or unset "
-                "MASTER_ENCRYPTION_KEY to use the shared DEEPSEEK_API_KEY."
+                "MASTER_ENCRYPTION_KEY to use the shared OPENAI_API_KEY."
             ),
         )
     return LLMClient.from_credentials(creds)
@@ -285,7 +285,7 @@ async def get_facts(
 async def get_tool_manifest(provider: str):
     """Return ready-to-register tool schemas for an agent SDK.
 
-    provider: "anthropic", "openai", or "deepseek".
+    provider: "anthropic" or "openai".
 
     The returned tools (search_memory, recall_fact, save_memory,
     list_history) require the calling app to bind user_id server-side

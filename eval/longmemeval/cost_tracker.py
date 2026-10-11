@@ -20,17 +20,13 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 
 # USD per token. Source: OpenAI pricing page, 2026-04.
-# DeepSeek entries are placeholders (zero) so calls register call/token
-# counts without inflating the $15 kill-switch — DeepSeek pricing varies
-# and we're optimising for benchmark accuracy, not exact dollar tracking.
 _PRICING = {
     "gpt-4o-mini":             (0.15 / 1_000_000, 0.60 / 1_000_000),
     "gpt-4o":                  (2.50 / 1_000_000, 10.00 / 1_000_000),
     "gpt-5-mini":              (0.25 / 1_000_000, 2.00 / 1_000_000),
     "text-embedding-3-small":  (0.02 / 1_000_000, 0.0),
     "text-embedding-3-large":  (0.13 / 1_000_000, 0.0),
-    "deepseek-v4-flash":       (0.0, 0.0),
-    "deepseek-v4-pro":         (0.0, 0.0),
+    "gpt-5.6-sol":             (5.00 / 1_000_000, 30.00 / 1_000_000),
 }
 
 
