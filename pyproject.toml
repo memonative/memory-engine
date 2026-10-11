@@ -24,7 +24,7 @@ license-files = ["LICENSE"]
 # unconditionally — `process()` and `write()` fail without them. A dependency
 # whose absence breaks the primary path is not an extra.
 dependencies = [
-    "sqlalchemy>=2.0.29",
+    "sqlalchemy[asyncio]>=2.0.29",
     "asyncpg>=0.29.0",
     "alembic>=1.13.1",
     "pgvector>=0.2.5",
